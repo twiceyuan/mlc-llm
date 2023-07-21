@@ -3,6 +3,7 @@ package ai.mlc.mlcchat
 import ai.mlc.mlcllm.ChatModule
 import android.app.Application
 import android.os.Environment
+import android.util.Log
 import android.widget.Toast
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.toMutableStateList
@@ -13,6 +14,7 @@ import com.google.gson.annotations.SerializedName
 import kotlinx.coroutines.launch
 import java.io.File
 import java.io.FileOutputStream
+import java.lang.RuntimeException
 import java.net.URL
 import java.nio.channels.Channels
 import java.util.UUID
@@ -589,11 +591,18 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
                 viewModelScope.launch {
                     Toast.makeText(application, "Initialize...", Toast.LENGTH_SHORT).show()
                 }
-                backend.unload()
-                backend.reload(modelLib, modelPath)
-                viewModelScope.launch {
-                    Toast.makeText(application, "Ready to chat", Toast.LENGTH_SHORT).show()
-                    switchToReady()
+                try {
+                    backend.unload()
+                    backend.reload(modelLib, modelPath)
+                    viewModelScope.launch {
+                        Toast.makeText(application, "Ready to chat", Toast.LENGTH_SHORT).show()
+                        switchToReady()
+                    }
+                } catch (e: RuntimeException) {
+                    Log.e("MLC-LLM", "load model failed.", e)
+                    viewModelScope.launch {
+                        Toast.makeText(application, "Init model failed.", Toast.LENGTH_SHORT).show()
+                    }
                 }
             }
         }
